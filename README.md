@@ -1,5 +1,5 @@
 # Vantyi Funeral Parlour & Dee Marble and Granite — Client & Order Tracking System
-
+🔗 **Live demo:** https://vantyi-tracking-app-frcucjahcxcxbxfq.southafricanorth-01.azurewebsites.net/docs
 A backend system built to solve a real operational problem: **Vantyi Funeral
 Parlour** (funeral services) and **Dee Marble and Granite** (tombstones)
 operate as two connected businesses with no shared system to track a client
@@ -56,7 +56,7 @@ e.g. investigating why the average gap is over 7 weeks and whether it can
 be shortened.
 
 ## Next steps (planned)
-- Deploy to Azure App Service + Azure SQL
+- Deployed to Azure App Service (live demo linked above)
 - Build a simple frontend (React) for staff to use day-to-day
 - Power BI dashboard built directly on `status_log` and `tombstone_orders`
   to visualise the pipeline and flag orders that are overdue
