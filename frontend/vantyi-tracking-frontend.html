@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vantyi / Dee Marble — Tracking System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.25.6/babel.min.js"></script>
+<style>
+  :root{
+    --navy:#1E2761;
+    --navy-deep:#151b49;
+    --ice:#CADCFC;
+    --ice-tint:#EEF3FF;
+    --card:#F4F7FE;
+    --ink:#1E2761;
+    --muted:#5B6785;
+    --line:#DDE4F7;
+    --white:#ffffff;
+    --amber:#B9770E;
+    --amber-bg:#FCF1DC;
+    --teal:#12786B;
+    --teal-bg:#DFF3F0;
+    --green:#1E7A46;
+    --green-bg:#E1F5E9;
+    --gray:#5B6785;
+    --gray-bg:#EAEDF6;
+    --blue:#2451C4;
+    --blue-bg:#E4ECFF;
+    --danger:#B3261E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#FAFBFF;
+    color:var(--ink);
+    font-family:'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:Cambria, Georgia, 'Times New Roman', serif; margin:0; }
+  #root{ min-height:100vh; display:flex; flex-direction:column; }
+
+  /* ---- Top bar ---- */
+  .topbar{
+    background:var(--navy);
+    color:var(--white);
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand-mark{
+    width:38px;height:38px;border-radius:10px;
+    background:var(--ice);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--navy); font-weight:800; font-family:Cambria, serif; font-size:18px;
+  }
+  .brand-text h1{ font-size:19px; color:var(--white); letter-spacing:.2px; }
+  .brand-text span{ font-size:12px; color:var(--ice); }
+  .api-status{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ice); }
+  .dot{ width:8px;height:8px;border-radius:50%; background:#8be0a6; box-shadow:0 0 0 3px rgba(139,224,166,.25); }
+  .dot.off{ background:#e08b8b; box-shadow:0 0 0 3px rgba(224,139,139,.25); }
+
+  /* ---- Nav tabs ---- */
+  .tabs{
+    background:var(--navy-deep);
+    display:flex; gap:4px; padding:0 24px; overflow-x:auto;
+  }
+  .tab{
+    padding:13px 18px; color:#B6C0EA; background:none; border:none; cursor:pointer;
+    font-size:14px; font-weight:600; border-bottom:3px solid transparent; white-space:nowrap;
+    font-family:inherit;
+  }
+  .tab:hover{ color:var(--white); }
+  .tab.active{ color:var(--white); border-bottom-color:var(--ice); }
+
+  .content{ flex:1; padding:28px; max-width:1180px; margin:0 auto; width:100%; }
+  .page-head{ margin-bottom:22px; }
+  .page-head h2{ font-size:26px; color:var(--navy); }
+  .page-head p{ margin:4px 0 0; color:var(--muted); font-size:14px; }
+
+  /* ---- Cards / grid ---- */
+  .grid{ display:grid; gap:16px; }
+  .grid.cols-4{ grid-template-columns:repeat(4,1fr); }
+  .grid.cols-2{ grid-template-columns:1.1fr .9fr; }
+  @media (max-width:900px){ .grid.cols-4{grid-template-columns:repeat(2,1fr);} .grid.cols-2{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--white); border:1px solid var(--line); border-radius:12px; padding:20px;
+  }
+  .metric-card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .metric-card .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; }
+  .metric-card .value{ font-family:Cambria, serif; font-size:32px; color:var(--navy); margin-top:6px; }
+  .metric-card .sub{ font-size:12px; color:var(--muted); margin-top:4px; }
+
+  .section-title{ font-size:15px; color:var(--navy); margin:0 0 12px; font-family:Cambria, serif; }
+
+  /* ---- Pipeline visual (signature element) ---- */
+  .pipeline{ display:flex; align-items:stretch; gap:0; margin-top:6px; }
+  .pipeline .seg{ flex:1; text-align:center; position:relative; padding:10px 4px; }
+  .pipeline .seg .bar{ height:8px; border-radius:5px; background:var(--line); }
+  .pipeline .seg.done .bar{ background:var(--navy); }
+  .pipeline .seg .lbl{ font-size:10.5px; color:var(--muted); margin-top:6px; display:block; }
+  .pipeline .seg.done .lbl{ color:var(--navy); font-weight:700; }
+
+  /* ---- Table ---- */
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.6px;
+      padding:10px 12px; border-bottom:2px solid var(--line); }
+  td{ padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tr:hover td{ background:#FAFBFF; }
+
+  .badge{ display:inline-block; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:700; }
+  .badge.Quoted{ background:var(--gray-bg); color:var(--gray); }
+  .badge.Approved{ background:var(--blue-bg); color:var(--blue); }
+  .badge.InProduction, .badge.In-Production{ background:var(--amber-bg); color:var(--amber); }
+  .badge.Ready{ background:var(--teal-bg); color:var(--teal); }
+  .badge.Installed{ background:var(--green-bg); color:var(--green); }
+  .badge.Booked{ background:var(--blue-bg); color:var(--blue); }
+  .badge.Completed{ background:var(--green-bg); color:var(--green); }
+
+  /* ---- Forms ---- */
+  label{ font-size:12.5px; font-weight:700; color:var(--navy); display:block; margin-bottom:5px; }
+  input, select, textarea{
+    width:100%; padding:9px 11px; border-radius:8px; border:1px solid var(--line);
+    font-size:13.5px; font-family:inherit; background:var(--white); color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--navy); outline-offset:1px; }
+  .field{ margin-bottom:13px; }
+  .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px){ .form-row{ grid-template-columns:1fr; } }
+
+  button.primary{
+    background:var(--navy); color:var(--white); border:none; padding:10px 18px; border-radius:8px;
+    font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  button.primary:hover{ background:var(--navy-deep); }
+  button.primary:disabled{ opacity:.5; cursor:not-allowed; }
+  button.ghost{
+    background:none; color:var(--navy); border:1px solid var(--line); padding:8px 14px; border-radius:8px;
+    font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;
+  }
+  button.ghost:hover{ background:var(--ice-tint); }
+
+  .empty{ text-align:center; padding:50px 20px; color:var(--muted); }
+  .empty h3{ color:var(--navy); font-size:16px; margin-bottom:6px; }
+  .toast{
+    position:fixed; bottom:24px; right:24px; background:var(--navy); color:var(--white);
+    padding:12px 18px; border-radius:10px; font-size:13.5px; box-shadow:0 8px 24px rgba(0,0,0,.2);
+    z-index:50;
+  }
+  .toast.error{ background:var(--danger); }
+  .banner{
+    background:var(--amber-bg); color:var(--amber); border:1px solid #f0d9a8; border-radius:10px;
+    padding:12px 16px; font-size:13px; margin-bottom:18px;
+  }
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(21,27,73,.45); display:flex; align-items:center; justify-content:center;
+    padding:20px; z-index:40;
+  }
+  .modal{ background:var(--white); border-radius:14px; padding:26px; width:100%; max-width:520px; max-height:88vh; overflow:auto; }
+  .modal h3{ font-size:19px; color:var(--navy); margin-bottom:16px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+  .link-btn{ background:none; border:none; color:var(--navy); text-decoration:underline; cursor:pointer; font-size:12.5px; padding:0; font-family:inherit; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback } = React;
+
+const DEFAULT_API = "https://vantyi-tracking-app-frcucjahcxcxbxfq.southafricanorth-01.azurewebsites.net";
+
+function useApi(baseUrl) {
+  const [online, setOnline] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetch(baseUrl + "/").then(r => r.ok ? setOnline(true) : setOnline(false)).catch(() => alive && setOnline(false));
+    return () => { alive = false; };
+  }, [baseUrl]);
+
+  const call = useCallback(async (path, options = {}) => {
+    const res = await fetch(baseUrl + path, {
+      ...options,
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error("Request failed (" + res.status + ") " + text.slice(0, 200));
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }, [baseUrl]);
+
+  return { online, call };
+}
+
+function Toast({ toast }) {
+  if (!toast) return null;
+  return <div className={"toast" + (toast.type === "error" ? " error" : "")}>{toast.message}</div>;
+}
+
+function StatBox({ label, value, sub }) {
+  return (
+    <div className="metric-card">
+      <div className="label">{label}</div>
+      <div className="value">{value}</div>
+      {sub && <div className="sub">{sub}</div>}
+    </div>
+  );
+}
+
+const STAGES = ["Quoted", "Approved", "In Production", "Ready", "Installed"];
+
+function Pipeline({ status }) {
+  const idx = STAGES.indexOf(status);
+  return (
+    <div className="pipeline">
+      {STAGES.map((s, i) => (
+        <div key={s} className={"seg" + (i <= idx ? " done" : "")}>
+          <div className="bar"></div>
+          <span className="lbl">{s}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Badge({ value }) {
+  const key = (value || "").replace(/\s+/g, "");
+  return <span className={"badge " + key}>{value}</span>;
+}
+
+/* ---------------- Overview ---------------- */
+function Overview({ call, notify }) {
+  const [metrics, setMetrics] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [m, o] = await Promise.all([
+        call("/metrics/summary"),
+        call("/tombstone-orders"),
+      ]);
+      setMetrics(m);
+      setOrders(o);
+    } catch (e) {
+      notify(e.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [call, notify]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <div className="empty">Loading live data…</div>;
+  if (!metrics) return <div className="empty"><h3>Couldn't reach the API</h3><p>Check the connection settings above.</p></div>;
+
+  return (
+    <div>
+      <div className="grid cols-4" style={{ marginBottom: 24 }}>
+        <StatBox label="Funeral Services" value={metrics.total_funeral_services} />
+        <StatBox label="Tombstone Orders" value={metrics.total_tombstone_orders} />
+        <StatBox label="Completed Orders" value={metrics.completed_tombstone_orders} />
+        <StatBox
+          label="Avg. Funeral → Install"
+          value={metrics.average_days_funeral_to_installation != null ? metrics.average_days_funeral_to_installation + "d" : "—"}
+          sub="days, across completed orders"
+        />
+      </div>
+
+      <div className="card">
+        <h3 className="section-title">Orders currently in the pipeline</h3>
+        {orders.length === 0 ? (
+          <div className="empty"><h3>No orders yet</h3><p>Create a tombstone order to see it tracked here.</p></div>
+        ) : (
+          orders.slice(0, 6).map(o => (
+            <div key={o.order_id} style={{ padding: "14px 0", borderBottom: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, marginBottom: 4 }}>
+                <strong>Order #{o.order_id}</strong>
+                <Badge value={o.status} />
+              </div>
+              <Pipeline status={o.status} />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Generic list + create pattern ---------------- */
+function useEntity(call, path, notify) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setItems(await call(path));
+    } catch (e) {
+      notify(e.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [call, path, notify]);
+
+  useEffect(() => { load(); }, [load]);
+  return { items, loading, reload: load };
+}
+
+/* ---------------- Clients ---------------- */
+function ClientsPage({ call, notify }) {
+  const { items, loading, reload } = useEntity(call, "/clients", notify);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ full_name: "", date_of_death: "", gender: "" });
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.full_name.trim()) { notify("Full name is required", "error"); return; }
+    setSaving(true);
+    try {
+      await call("/clients", { method: "POST", body: JSON.stringify(form) });
+      notify("Client added");
+      setForm({ full_name: "", date_of_death: "", gender: "" });
+      setShowForm(false);
+      reload();
+    } catch (e) {
+      notify(e.message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="page-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h2>Clients</h2>
+          <p>Every family record starts here — one entry, shared by both businesses.</p>
+        </div>
+        <button className="primary" onClick={() => setShowForm(true)}>+ Add client</button>
+      </div>
+
+      <div className="card">
+        {loading ? <div className="empty">Loading…</div> : items.length === 0 ? (
+          <div className="empty"><h3>No clients yet</h3><p>Add the first client record to get started.</p></div>
+        ) : (
+          <table>
+            <thead><tr><th>ID</th><th>Full name</th><th>Gender</th><th>Date of death</th></tr></thead>
+            <tbody>
+              {items.map(c => (
+                <tr key={c.client_id}>
+                  <td>#{c.client_id}</td>
+                  <td>{c.full_name}</td>
+                  <td>{c.gender || "—"}</td>
+                  <td>{c.date_of_death || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Add a client</h3>
+            <form onSubmit={submit}>
+              <div className="field">
+                <label>Full name</label>
+                <input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="e.g. John Mahlangu" />
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Gender</label>
+                  <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
+                    <option value="">—</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Date of death</label>
+                  <input type="date" value={form.date_of_death} onChange={e => setForm({ ...form, date_of_death: e.target.value })} />
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost" onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="submit" className="primary" disabled={saving}>{saving ? "Saving…" : "Save client"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Funeral Services ---------------- */
+function ServicesPage({ call, notify }) {
+  const { items, loading, reload } = useEntity(call, "/funeral-services", notify);
+  const { items: clients } = useEntity(call, "/clients", notify);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ client_id: "", service_type: "Full Traditional Service", service_date: "", venue: "" });
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.client_id) { notify("Select a client first", "error"); return; }
+    setSaving(true);
+    try {
+      await call("/funeral-services", { method: "POST", body: JSON.stringify({ ...form, client_id: Number(form.client_id) }) });
+      notify("Funeral service booked");
+      setForm({ client_id: "", service_type: "Full Traditional Service", service_date: "", venue: "" });
+      setShowForm(false);
+      reload();
+    } catch (e) {
+      notify(e.message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="page-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h2>Funeral Services</h2>
+          <p>Vantyi's side of the record — bookings, dates and status.</p>
+        </div>
+        <button className="primary" onClick={() => setShowForm(true)}>+ Book service</button>
+      </div>
+
+      <div className="card">
+        {loading ? <div className="empty">Loading…</div> : items.length === 0 ? (
+          <div className="empty"><h3>No services booked yet</h3><p>Book a funeral service to get started.</p></div>
+        ) : (
+          <table>
+            <thead><tr><th>ID</th><th>Client</th><th>Type</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+              {items.map(s => (
+                <tr key={s.service_id}>
+                  <td>#{s.service_id}</td>
+                  <td>Client #{s.client_id}</td>
+                  <td>{s.service_type || "—"}</td>
+                  <td>{s.service_date || "—"}</td>
+                  <td><Badge value={s.status} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Book a funeral service</h3>
+            <form onSubmit={submit}>
+              <div className="field">
+                <label>Client</label>
+                <select value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}>
+                  <option value="">Select a client…</option>
+                  {clients.map(c => <option key={c.client_id} value={c.client_id}>#{c.client_id} — {c.full_name}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Service type</label>
+                  <select value={form.service_type} onChange={e => setForm({ ...form, service_type: e.target.value })}>
+                    <option>Full Traditional Service</option>
+                    <option>Cremation Service</option>
+                    <option>Memorial Service</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Service date</label>
+                  <input type="date" value={form.service_date} onChange={e => setForm({ ...form, service_date: e.target.value })} />
+                </div>
+              </div>
+              <div className="field">
+                <label>Venue</label>
+                <input value={form.venue} onChange={e => setForm({ ...form, venue: e.target.value })} placeholder="e.g. Vantyi Funeral Parlour Hall" />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost" onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="submit" className="primary" disabled={saving}>{saving ? "Saving…" : "Book service"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Tombstone Orders ---------------- */
+function OrdersPage({ call, notify }) {
+  const { items, loading, reload } = useEntity(call, "/tombstone-orders", notify);
+  const { items: clients } = useEntity(call, "/clients", notify);
+  const { items: services } = useEntity(call, "/funeral-services", notify);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ client_id: "", funeral_service_id: "", material: "Black Granite", quote_amount: "" });
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.client_id) { notify("Select a client first", "error"); return; }
+    setSaving(true);
+    try {
+      await call("/tombstone-orders", {
+        method: "POST",
+        body: JSON.stringify({
+          client_id: Number(form.client_id),
+          funeral_service_id: form.funeral_service_id ? Number(form.funeral_service_id) : null,
+          material: form.material,
+          quote_amount: form.quote_amount ? Number(form.quote_amount) : null,
+        }),
+      });
+      notify("Tombstone order created");
+      setForm({ client_id: "", funeral_service_id: "", material: "Black Granite", quote_amount: "" });
+      setShowForm(false);
+      reload();
+    } catch (e) {
+      notify(e.message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const advance = async (order) => {
+    const idx = STAGES.indexOf(order.status);
+    if (idx === -1 || idx === STAGES.length - 1) return;
+    const nextStatus = STAGES[idx + 1];
+    try {
+      await call("/tombstone-orders/" + order.order_id, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      notify("Order #" + order.order_id + " moved to " + nextStatus);
+      reload();
+    } catch (e) {
+      notify(e.message, "error");
+    }
+  };
+
+  return (
+    <div>
+      <div className="page-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <h2>Tombstone Orders</h2>
+          <p>Dee Marble's side — linked back to the funeral that triggered it.</p>
+        </div>
+        <button className="primary" onClick={() => setShowForm(true)}>+ New order</button>
+      </div>
+
+      <div className="card">
+        {loading ? <div className="empty">Loading…</div> : items.length === 0 ? (
+          <div className="empty"><h3>No orders yet</h3><p>Create a tombstone order to start tracking it.</p></div>
+        ) : (
+          items.map(o => (
+            <div key={o.order_id} style={{ padding: "16px 0", borderBottom: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <strong>Order #{o.order_id}</strong>
+                  <span style={{ color: "var(--muted)", fontSize: 12.5, marginLeft: 10 }}>
+                    Client #{o.client_id}{o.funeral_service_id ? " · linked to Service #" + o.funeral_service_id : ""} · {o.material}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Badge value={o.status} />
+                  {o.status !== "Installed" && (
+                    <button className="ghost" onClick={() => advance(o)}>Advance to {STAGES[STAGES.indexOf(o.status) + 1]} →</button>
+                  )}
+                </div>
+              </div>
+              <Pipeline status={o.status} />
+            </div>
+          ))
+        )}
+      </div>
+
+      {showForm && (
+        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3>Create a tombstone order</h3>
+            <form onSubmit={submit}>
+              <div className="field">
+                <label>Client</label>
+                <select value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })}>
+                  <option value="">Select a client…</option>
+                  {clients.map(c => <option key={c.client_id} value={c.client_id}>#{c.client_id} — {c.full_name}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Linked funeral service (optional)</label>
+                <select value={form.funeral_service_id} onChange={e => setForm({ ...form, funeral_service_id: e.target.value })}>
+                  <option value="">None</option>
+                  {services.map(s => <option key={s.service_id} value={s.service_id}>#{s.service_id} — Client #{s.client_id}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <div className="field">
+                  <label>Material</label>
+                  <select value={form.material} onChange={e => setForm({ ...form, material: e.target.value })}>
+                    <option>Black Granite</option>
+                    <option>Grey Granite</option>
+                    <option>White Marble</option>
+                    <option>Dark Marble</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Quote amount (R)</label>
+                  <input type="number" value={form.quote_amount} onChange={e => setForm({ ...form, quote_amount: e.target.value })} placeholder="e.g. 15000" />
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost" onClick={() => setShowForm(false)}>Cancel</button>
+                <button type="submit" className="primary" disabled={saving}>{saving ? "Saving…" : "Create order"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Staff ---------------- */
+function StaffPage({ call, notify }) {
+  const { items, loading } = useEntity(call, "/staff", notify);
+  return (
+    <div>
+      <div className="page-head">
+        <h2>Staff</h2>
+        <p>Everyone working across both businesses, in one place.</p>
+      </div>
+      <div className="card">
+        {loading ? <div className="empty">Loading…</div> : items.length === 0 ? (
+          <div className="empty"><h3>No staff records yet</h3></div>
+        ) : (
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Business unit</th></tr></thead>
+            <tbody>
+              {items.map(s => (
+                <tr key={s.staff_id}>
+                  <td>#{s.staff_id}</td><td>{s.full_name}</td><td>{s.role}</td><td>{s.business_unit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- App shell ---------------- */
+function App() {
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API);
+  const [editingUrl, setEditingUrl] = useState(false);
+  const [urlDraft, setUrlDraft] = useState(DEFAULT_API);
+  const [tab, setTab] = useState("overview");
+  const [toast, setToast] = useState(null);
+  const { online, call } = useApi(apiUrl);
+
+  const notify = useCallback((message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3200);
+  }, []);
+
+  const TABS = [
+    { id: "overview", label: "Overview" },
+    { id: "clients", label: "Clients" },
+    { id: "services", label: "Funeral Services" },
+    { id: "orders", label: "Tombstone Orders" },
+    { id: "staff", label: "Staff" },
+  ];
+
+  return (
+    <React.Fragment>
+      <div className="topbar">
+        <div className="brand">
+          <div className="brand-mark">V</div>
+          <div className="brand-text">
+            <h1>Vantyi / Dee Marble</h1>
+            <span>Client & Order Tracking System</span>
+          </div>
+        </div>
+        <div className="api-status">
+          <span className={"dot" + (online === false ? " off" : "")}></span>
+          {online === null ? "Checking API…" : online ? "Connected to live API" : "API unreachable"}
+          {!editingUrl ? (
+            <button className="link-btn" style={{ color: "var(--ice)", marginLeft: 8 }} onClick={() => { setUrlDraft(apiUrl); setEditingUrl(true); }}>change</button>
+          ) : null}
+        </div>
+      </div>
+
+      {editingUrl && (
+        <div style={{ background: "var(--navy-deep)", padding: "10px 28px", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <input style={{ maxWidth: 480 }} value={urlDraft} onChange={e => setUrlDraft(e.target.value)} placeholder="http://127.0.0.1:8000" />
+          <button className="primary" onClick={() => { setApiUrl(urlDraft.replace(/\/$/, "")); setEditingUrl(false); }}>Use this API</button>
+          <button className="ghost" onClick={() => setEditingUrl(false)} style={{ borderColor: "var(--ice)", color: "var(--ice)" }}>Cancel</button>
+        </div>
+      )}
+
+      <div className="tabs">
+        {TABS.map(t => (
+          <button key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>{t.label}</button>
+        ))}
+      </div>
+
+      <div className="content">
+        {online === false && (
+          <div className="banner">Can't reach the API right now. If you just deployed, the free-tier app may be waking up — try refreshing in a few seconds.</div>
+        )}
+        {tab === "overview" && <Overview call={call} notify={notify} />}
+        {tab === "clients" && <ClientsPage call={call} notify={notify} />}
+        {tab === "services" && <ServicesPage call={call} notify={notify} />}
+        {tab === "orders" && <OrdersPage call={call} notify={notify} />}
+        {tab === "staff" && <StaffPage call={call} notify={notify} />}
+      </div>
+
+      <Toast toast={toast} />
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
