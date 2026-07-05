@@ -7,11 +7,14 @@ Run locally:
 
 Docs available at http://127.0.0.1:8000/docs
 """
+import secrets
+import string
 from datetime import date
 from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 import models
@@ -19,6 +22,20 @@ import schemas
 from database import engine, get_db, Base
 
 Base.metadata.create_all(bind=engine)
+
+# Lightweight migration: add tracking_code to an existing tombstone_orders
+# table that predates this column (create_all only creates NEW tables,
+# it won't alter ones that already exist).
+with engine.begin() as conn:
+    try:
+        conn.execute(text("ALTER TABLE tombstone_orders ADD COLUMN tracking_code VARCHAR(12)"))
+    except Exception:
+        pass  # column already exists
+
+
+def generate_tracking_code() -> str:
+    alphabet = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(8))
 
 app = FastAPI(
     title="Vantyi / Dee Marble Tracking System",
@@ -158,6 +175,14 @@ def update_funeral_service(service_id: int, update: schemas.FuneralServiceUpdate
 @app.post("/tombstone-orders", response_model=schemas.TombstoneOrderOut)
 def create_tombstone_order(order: schemas.TombstoneOrderCreate, db: Session = Depends(get_db)):
     obj = models.TombstoneOrder(**order.model_dump())
+
+    # Generate a unique, non-guessable tracking code for the family to use
+    for _ in range(5):
+        code = generate_tracking_code()
+        if not db.query(models.TombstoneOrder).filter(models.TombstoneOrder.tracking_code == code).first():
+            obj.tracking_code = code
+            break
+
     db.add(obj)
     db.commit()
     db.refresh(obj)
@@ -254,6 +279,48 @@ def metrics_summary(db: Session = Depends(get_db)):
         "average_days_funeral_to_installation": avg_handoff_days,
         "total_revenue_collected": total_revenue,
     }
+
+
+# ============================================================
+# Public Order Tracking (no login — reference-code lookup only)
+# ============================================================
+@app.get("/track/{tracking_code}", response_model=schemas.PublicTrackingOut)
+def track_order(tracking_code: str, db: Session = Depends(get_db)):
+    code = tracking_code.strip().upper()
+    order = db.query(models.TombstoneOrder).filter(
+        models.TombstoneOrder.tracking_code == code
+    ).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="No order found for that tracking code. Please check it and try again.")
+
+    # Privacy: only first name + last initial, never the full client record
+    name_parts = (order.client.full_name or "").split()
+    if len(name_parts) >= 2:
+        display_name = f"{name_parts[0]} {name_parts[-1][0]}."
+    else:
+        display_name = name_parts[0] if name_parts else "Client"
+
+    logs = db.query(models.StatusLog).filter(
+        models.StatusLog.entity_type == "tombstone_order",
+        models.StatusLog.entity_id == order.order_id,
+    ).order_by(models.StatusLog.changed_at).all()
+
+    timeline = [
+        schemas.TrackingTimelineEntry(status=log.new_status, changed_at=log.changed_at)
+        for log in logs if log.new_status
+    ]
+
+    return schemas.PublicTrackingOut(
+        tracking_code=order.tracking_code,
+        client_display_name=display_name,
+        status=order.status,
+        material=order.material,
+        order_date=order.order_date,
+        expected_completion=order.expected_completion,
+        actual_completion=order.actual_completion,
+        installation_site=order.installation_site,
+        timeline=timeline,
+    )
 
 
 @app.get("/")

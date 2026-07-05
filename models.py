@@ -78,6 +78,7 @@ class TombstoneOrder(Base):
     actual_completion = Column(Date)
     installation_site = Column(String(150))
     status = Column(String(30), default="Quoted")
+    tracking_code = Column(String(12), unique=True, index=True)
     created_at = Column(DateTime, server_default=func.now())
 
     client = relationship("Client", back_populates="tombstone_orders")

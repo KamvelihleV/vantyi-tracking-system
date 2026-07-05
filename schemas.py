@@ -119,6 +119,25 @@ class TombstoneOrderOut(TombstoneOrderBase):
     order_id: int
     order_date: Optional[date] = None
     created_at: Optional[datetime] = None
+    tracking_code: Optional[str] = None
+
+
+# ---------- Public Tracking (no auth, minimal fields only) ----------
+class TrackingTimelineEntry(BaseModel):
+    status: str
+    changed_at: Optional[datetime] = None
+
+
+class PublicTrackingOut(BaseModel):
+    tracking_code: str
+    client_display_name: str
+    status: str
+    material: Optional[str] = None
+    order_date: Optional[date] = None
+    expected_completion: Optional[date] = None
+    actual_completion: Optional[date] = None
+    installation_site: Optional[str] = None
+    timeline: list[TrackingTimelineEntry] = []
 
 
 # ---------- Payment ----------

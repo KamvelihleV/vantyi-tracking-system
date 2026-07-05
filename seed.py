@@ -6,10 +6,17 @@ Run once:
     python seed.py
 """
 import random
+import secrets
+import string
 from datetime import date, timedelta
 
 from database import SessionLocal, engine, Base
 import models
+
+
+def generate_tracking_code():
+    alphabet = string.ascii_uppercase + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(8))
 
 Base.metadata.create_all(bind=engine)
 db = SessionLocal()
@@ -120,6 +127,7 @@ for i in range(25):
             actual_completion=actual_completion,
             installation_site=service.burial_site,
             status=current_status,
+            tracking_code=generate_tracking_code(),
         )
         db.add(order)
         db.commit()
