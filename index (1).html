@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vantyi / Dee Marble — Client & Order Tracking System</title>
+<style>
+  :root{
+    --navy:#1E2761;
+    --navy-deep:#151b49;
+    --ice:#CADCFC;
+    --card:#F4F7FE;
+    --ink:#1E2761;
+    --muted:#5B6785;
+    --line:#DDE4F7;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy);
+    color:var(--ink);
+    font-family:'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  h1,h2{ font-family:Cambria, Georgia, 'Times New Roman', serif; margin:0; }
+  .wrap{ max-width:640px; width:100%; text-align:center; }
+  .mark{
+    width:56px; height:56px; border-radius:16px; background:var(--ice); color:var(--navy);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:26px;
+    font-family:Cambria, serif; margin:0 auto 18px;
+  }
+  h1{ color:var(--white); font-size:26px; margin-bottom:8px; }
+  .sub{ color:var(--ice); font-size:14.5px; margin-bottom:36px; }
+
+  .cards{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:560px){ .cards{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--white); border-radius:14px; padding:28px 22px; text-decoration:none;
+    display:block; box-shadow:0 12px 30px rgba(21,27,73,.18); transition:transform .15s ease;
+  }
+  .card:hover{ transform:translateY(-3px); }
+  .card .icon{ font-size:32px; margin-bottom:12px; }
+  .card h2{ font-size:17px; color:var(--navy); margin-bottom:8px; }
+  .card p{ font-size:13px; color:var(--muted); margin:0; line-height:1.4; }
+
+  .links{ margin-top:32px; }
+  .links a{ color:var(--ice); font-size:12.5px; text-decoration:underline; margin:0 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mark">V</div>
+  <h1>Vantyi / Dee Marble</h1>
+  <div class="sub">Client &amp; Order Tracking System</div>
+
+  <div class="cards">
+    <a class="card" href="frontend/vantyi-tracking-frontend.html">
+      <div class="icon">🗂️</div>
+      <h2>Staff Dashboard</h2>
+      <p>For Vantyi &amp; Dee Marble staff — manage clients, services and tombstone orders.</p>
+    </a>
+
+    <a class="card" href="tracking-portal/track.html">
+      <div class="icon">📦</div>
+      <h2>Track Your Order</h2>
+      <p>For families — check your tombstone order status with your reference code. No login needed.</p>
+    </a>
+  </div>
+
+  <div class="links">
+    <a href="https://github.com/KamvelihleV/vantyi-tracking-system">Source code</a>
+    ·
+    <a href="https://vantyi-tracking-app-frcucjahcxcxbxfq.southafricanorth-01.azurewebsites.net/docs">Live API docs</a>
+  </div>
+</div>
+</body>
+</html>
